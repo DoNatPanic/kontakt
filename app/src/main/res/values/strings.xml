@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">kontakt</string>
+    <integer name="com_vk_sdk_AppId">53058931</integer>
+    <string name="logout">Выйти из аккаунта</string>
+    <string name="profile_photo">Фото профиля</string>
 </resources>
