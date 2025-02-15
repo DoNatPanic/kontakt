@@ -23,6 +23,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+
+            kotlinOptions {
+                freeCompilerArgs = listOf("-Xdebug")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -73,5 +80,9 @@ dependencies {
     // Glide configuration
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }
 
