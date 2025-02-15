@@ -20,6 +20,11 @@ import com.vk.id.vksdksupport.withVKIDToken
 import com.vk.sdk.api.account.AccountService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import ru.kontakt.data.network.EnumConverterFactory
+import ru.kontakt.data.vk.VkAPI
+import ru.kontakt.data.vk.dto.NewsFeedFilterDto
 import ru.kontakt.databinding.ActivityMainBinding
 import ru.kontakt.ui.profile.ProfilePageState
 
@@ -28,6 +33,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val state = MutableLiveData<ProfilePageState>(ProfilePageState.Unauthorized)
+    private lateinit var vkClient: VkAPI
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +42,13 @@ class MainActivity : AppCompatActivity() {
 
         VKID.init(this)
         VK.initialize(this)
+
+        vkClient = Retrofit.Builder()
+            .baseUrl("https://api.vk.ru/method/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(EnumConverterFactory())
+            .build()
+            .create(VkAPI::class.java)
 
         enableEdgeToEdge()
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -54,7 +67,8 @@ class MainActivity : AppCompatActivity() {
 
         state.observe(this) { state -> render(state) }
 
-        if (VK.isLoggedIn()) {
+        if (VKID.instance.accessToken != null) {
+            requestNewsFeed()
             requestAccountInfoAndRender()
         } else {
             state.postValue(ProfilePageState.Unauthorized)
@@ -96,7 +110,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestNewsFeed() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val auth = "Bearer ${VKID.instance.accessToken!!.token}"
+            val feed = vkClient.getNewsFeed(NewsFeedFilterDto.POST, auth, count = 5)
+            val anotherFeed =
+                vkClient.getNewsFeed(null, auth, count = 5, startFrom = feed.response!!.nextFrom)
+        }
+    }
+
     private fun onLogin(oAuth: OneTapOAuth?, token: AccessToken) {
+        requestNewsFeed()
         requestAccountInfoAndRender()
     }
 
